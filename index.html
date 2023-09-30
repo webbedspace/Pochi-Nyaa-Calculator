@@ -1,0 +1,408 @@
+<!doctype html>
+<meta charset=utf8>
+<title>Pochi & Nyaa Calculator</title>
+<script src="../lib/jquery-3.6.0.slim.min.js"></script>
+<style>
+h1 {
+  color:white;
+  display: inline-block;
+  margin: 0 auto;
+  padding:16px 128px;
+  text-shadow:-2px -2px 0 #000,
+    -2px -1px 0 #000,
+    -2px 0px 0 #000,
+    -2px 1px 0 #000,
+    -2px 2px 0 #000,
+    -1px -2px 0 #000,
+    -1px -1px 0 #000,
+    -1px 0px 0 #000,
+    -1px 1px 0 #000,
+    -1px 2px 0 #000,
+    0px -2px 0 #000,
+    0px -1px 0 #000,
+    0px 0px 0 #000,
+    0px 1px 0 #000,
+    0px 2px 0 #000,
+    1px -2px 0 #000,
+    1px -1px 0 #000,
+    1px 0px 0 #000,
+    1px 1px 0 #000,
+    1px 2px 0 #000,
+    2px -2px 0 #000,
+    2px -1px 0 #000,
+    2px 0px 0 #000,
+    2px 1px 0 #000,
+    2px 2px 0 #000;
+  background: radial-gradient(ellipse at center, #cbf7a0, #f7f7e1, #cbf7a0, #cbf7a0, #f7f7e1, #cbf7a0, transparent, transparent,transparent,transparent,transparent);
+  & s {
+    text-decoration: none;
+    position:relative;
+    &::after {
+      content: "Chainsim";
+      color: transparent;
+      text-shadow: none;
+      top: 0;
+      left:0;
+      display: block;
+      position: absolute;
+      pointer-events:none;
+      background: linear-gradient(179deg, transparent 0% 48%, red 49% 61%, transparent 62%);
+    }
+  }
+}
+body {
+  display:flex;
+  flex-flow:column;
+  background: cornflowerblue;
+}
+footer {
+  background: rgba(255,255,255,0.8);
+  color:black;
+  border-radius:2em;
+  padding:0.5em;
+  width:672px;
+  margin:2em auto;
+  & a { color: cornflowerblue; font-weight:bold; }
+}
+p-app {
+  display: flex;
+  justify-content: center;
+  user-select:none;
+}
+p-worth-r, p-worth-y, p-worth-g, p-worth-b {
+  display:block;
+  text-align:center;
+  font-family:monospace;
+  font-size:20px;
+  font-weight: bold;
+  text-shadow:-1px -1px 0 #000,
+    -1px 0px 0 #000,
+    -1px 1px 0 #000,
+    0px -1px 0 #000,
+    0px 0px 0 #000,
+    0px 1px 0 #000,
+    1px -1px 0 #000,
+    1px 0px 0 #000,
+    1px 1px 0 #000;
+  
+}
+p-worth-r {
+  color: #f88890;
+}
+p-worth-y {
+  color: #f8c800;
+}
+p-worth-b {
+  color: #48c0f8;
+}
+p-worth-g {
+  color: #88f8c0;
+}
+p-board {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+p-controls {
+  display:flex;
+  flex-flow: row wrap;
+  margin:8px;
+  padding:8px 0px;
+  width:224px;
+  height:100%;
+  justify-content: center;
+  background: rgba(0,0,0,0.1);
+  & div {
+    width:100%;
+    height:16px;
+  }
+}
+p-button {
+  & * {
+    display:block; margin: 0 auto;
+  }
+  text-align:center;
+  cursor:pointer;
+  color:black;
+  margin:4px;
+  padding:8px;
+  border-radius:12px;
+  width:64px;
+  &:not(.active){
+    background: rgba(255,255,255,0.5);
+    &:hover {
+      background: rgba(255,255,255,0.8);
+    }
+    border:8px rgba(255,255,255,0.5) outset;
+  }
+  &.active {
+    background: rgba(255,255,255,0.2);
+    border:8px rgba(255,255,255,0.2) inset;
+  }
+}
+p-cell {
+  display: flex;
+  justify-content: center;
+  flex-flow:column;
+  background-size: contain;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  &::before {
+    content: "";
+    display:block;
+    position:absolute;
+    background: rgba(0,0,0,0.1);
+    width: 60px;
+    height: 60px;
+  }
+}
+p-cell:hover::before{
+  background: rgba(0,0,0,0.2);
+}
+p-button div, p-cell {
+  width: 64px;
+  height: 64px;
+  &[data-color=r] {
+    [nyan] & {
+      background-image: url('./nyan_r.gif');
+    }
+    [wan] & {
+      background-image: url('./wan_r.gif');
+    }
+  }
+  &[data-color=g] {
+    [nyan] & {
+      background-image: url('./nyan_g.gif');
+    }
+    [wan] & {
+      background-image: url('./wan_g.gif');
+    }
+  }
+  &[data-color=y] {
+    [nyan] & {
+      background-image: url('./nyan_y.gif');
+    }
+    [wan] & {
+      background-image: url('./wan_y.gif');
+    }
+  }
+  &[data-color=b] {
+    [nyan] & {
+      background-image: url('./nyan_b.gif');
+    }
+    [wan] & {
+      background-image: url('./wan_b.gif');
+    }
+  }
+}
+</style>
+<script>
+$(()=>{
+	// State
+	let rule = "MVS";
+	let brush = 'r';
+	let pressing = '';
+	let lineCount = false;
+	let lineTalliesCheckbox = $();
+	
+	function format(number) {
+		if (!number) {
+			return '';
+		}
+		if (lineCount) {
+			return Math.round(number/7*10)/10 + "L";
+		}
+		return number + '';
+	}
+
+	function computeAllValues() {
+		let cells = $('p-cell'),
+			data = cells.get().map(e => e.getAttribute('data-color'));
+
+		for (let i = 0; i < data.length; i += 1) {
+			if (!data[i]) {
+				$(cells[i])
+					.find('p-worth-r').text(format(computeValue(data, i, 'r'))).end()
+					.find('p-worth-y').text(format(computeValue(data, i, 'y'))).end()
+					.find('p-worth-g').text(format(computeValue(data, i, 'g'))).end()
+					.find('p-worth-b').text(format(computeValue(data, i, 'b')));
+			}
+			else {
+				$(cells[i]).find('p-worth-r,p-worth-y,p-worth-g,p-worth-b').text('');
+			}
+		}
+	}
+
+	function computeValue(data, cell, color) {
+		let consumed = new Set();
+		// Not strictly necessary when specified cell is empty
+		consumed.add(cell);
+		// In MVS rules, a needle creating two initial blastwaves causes those blastwaves
+		// and their propagations to be separate, and have their tail bonuses calculated separately.
+		// This map keeps track of those totals.
+		let originTotals = new Map();
+		// Temp variable for the blastwaves currently being analysed.
+		let blastwaves = new Map();
+		// In MVS, the number of "stub tails" (tails of worth 1) is subtracted
+		// after all other bonuses are calculated.
+		let stubTails = 0;
+		blastwaves.set(cell,{visited:new Set(), origin:null});
+		
+		while(blastwaves.size > 0) {
+			let newBlastwaves = new Map();
+			let propagated = new Set();
+			const propagateToDestination = direction => ({visited, origin}, cell) => {
+				// Prevent wraparound
+				if ((cell % 7 === 6 && direction === +1)
+					|| (cell % 7 === 0 && direction === -1)) {
+					return;
+				}
+				let destination = cell + direction;
+				if (!consumed.has(destination) && data[destination] === color) {
+					if (newBlastwaves.has(destination)) {
+						// On MVS, blastwaves combine when they meet IF they have the same origin.
+						if (rule === "MVS") {
+							let {visited:otherVisited, origin:otherOrigin} = newBlastwaves.get(destination);
+							if (origin === otherOrigin) {
+								newBlastwaves.set(destination,
+									{ origin, visited: new Set([...visited, destination, ...otherVisited])});
+								propagated.add(cell);
+							}
+						}
+					}
+					else {
+						newBlastwaves.set(destination,
+							{ origin: origin ?? destination, visited: new Set([...visited, destination])});
+						propagated.add(cell);
+					}
+				}
+			};
+			// Blastwave propagation is prioritised in this order.
+			// When blastwaves can't combine, this order determines which one propagates.
+			blastwaves.forEach(propagateToDestination(-7)); // Up
+			blastwaves.forEach(propagateToDestination(+7)); // Down
+			blastwaves.forEach(propagateToDestination(-1)); // Left
+			blastwaves.forEach(propagateToDestination(+1)); // Right
+			// Turn non-propagated cells into tails
+			blastwaves.forEach(({visited,origin}, cell) => {
+				if (origin !== null && !propagated.has(cell)) {
+					let {tails, total} = originTotals.get(origin) ?? {tails:0, total:0};
+					originTotals.set(origin, { tails: tails + 1, total: total + visited.size });
+					// On MVS, tails with a worth of 1 are subtracted from the final result (later).
+					stubTails += visited.size === 1;
+				}
+			});
+			// Mark newly reached cells as consumed
+			newBlastwaves.forEach((_, cell) => consumed.add(cell));
+			blastwaves = newBlastwaves;
+			firstIter = false;
+		}
+		// Obtain the base total from each origin.
+		let sumTotal = 0;
+		let maxTails = 0;
+		originTotals.forEach(({total, tails}) => {
+			sumTotal += total;
+			maxTails = Math.max(tails, maxTails);
+		});
+		// Compute the tail bonus (tails are only tallied in MVS rules).
+		let tailBonus = (rule === "MVS" ? Math.floor(0.04 * maxTails * sumTotal) : 0);
+		// On PS2, if the total worth is 1, reduce to 0.
+		// On MVS, subtract the number of stub tails from the total.
+		return (rule === "PS2" && sumTotal === 1) ? 0 : sumTotal + tailBonus - stubTails;
+	}
+	
+	let board = $('p-board');
+	for (let i = 0; i < 7*15; i++) {
+		let cell = $('<p-cell>');
+		cell.append('<p-worth-r>').append('<p-worth-y>').append('<p-worth-g>').append('<p-worth-b>');
+		board.append(cell);
+	}
+	$('html').mouseover('p-cell',({target:e})=> {
+		e = $(e);
+		if (e.is('p-cell') && pressing) {
+			e.removeAttr('data-color');
+			if (pressing === 'add') {
+				e.attr('data-color',brush);
+			}
+		}
+	}).mousedown('p-cell',({target:e})=> {
+		e = $(e);
+		if (e.is('p-cell')) {
+			pressing = e.attr('data-color') === brush ? 'erase' : 'add';
+			e.removeAttr('data-color');
+			if (pressing === 'add') {
+				e.attr('data-color',brush);
+			}
+		}
+	}).mouseup(_=> {
+		pressing = '';
+		computeAllValues();
+	});
+
+	// Add buttons
+	let
+		r_b = $('<p-button class=active><div data-color=r></p-button>').click(_=> {
+			brush = 'r';
+			r_b.addClass('active');
+			y_b.add(g_b).add(b_b).removeClass('active');
+		}),
+		y_b = $('<p-button><div data-color=y></p-button>').click(_=> {
+			brush = 'y';
+			y_b.addClass('active');
+			r_b.add(g_b).add(b_b).removeClass('active');
+		}),
+		g_b = $('<p-button><div data-color=g></p-button>').click(_=> {
+			brush = 'g';
+			g_b.addClass('active');
+			y_b.add(r_b).add(b_b).removeClass('active');
+		}),
+		b_b = $('<p-button><div data-color=b></p-button>').click(_=> {
+			brush = 'b';
+			b_b.addClass('active');
+			y_b.add(g_b).add(r_b).removeClass('active');
+		}),
+		mvs_b = $('<p-button class=active><b>MVS Rules</b></p-button>').click(_=> {
+			rule = "MVS";
+			mvs_b.addClass('active')
+			ps2_b.removeClass('active');
+			computeAllValues();
+		}),
+		ps2_b = $('<p-button><b>PS2 Rules</b></p-button>').click(_=> {
+			rule = "PS2";
+			ps2_b.addClass('active')
+			mvs_b.removeClass('active');
+			computeAllValues();
+		}),
+		nyaa_b = $('<p-button class=active><img src="./nyaa.gif"></p-button>').click(_=> {
+			$('p-app').removeAttr('wan').attr('nyan',true);
+			nyaa_b.addClass('active').next
+			pochi_b.removeClass('active');
+		}),
+		pochi_b = $('<p-button><img src="./pochi.gif"></p-button>').click(_=> {
+			$('p-app').removeAttr('nyan').attr('wan',true);
+			pochi_b.addClass('active');
+			nyaa_b.removeClass('active');
+		}),
+		raw_b = $('<p-button class=active><b>Quantity</b></p-button>').click(_=> {
+			lineCount = false;
+			raw_b.addClass('active')
+			lines_b.removeClass('active');
+			computeAllValues();
+		}),
+		lines_b = $('<p-button><b>Lines</b></p-button>').click(_=> {
+			lineCount = true;
+			lines_b.addClass('active')
+			raw_b.removeClass('active');
+			computeAllValues();
+		});
+
+	$('p-controls').append(r_b,y_b,g_b,b_b,'<div>',mvs_b,ps2_b,'<div>',nyaa_b,pochi_b,'<div>',raw_b,lines_b);
+});
+</script>
+<h1>The <span style="font-family:Verdana;font-weight:900;color:#2096d9;letter-spacing: -3px;">Pochi</span> <span style="color:#078800">&</span> <span style="font-family:cursive;font-weight:900;color:#cd7cbf;letter-spacing: 1px;">Nyaa</span> <s>Chainsim</s> Calculator Mk. II<span style="font-family:cursive;color:red;text-shadow:none">II</span></h1>
+<p-app nyan>
+<p-controls></p-controls>
+<p-board/>
+</p-app>
+<footer><ul><li>Numbers indicate the value of placing a <img src="hari_b.gif" style="width: 24px; height: 24px; vertical-align: middle;"> Spiky Nyan/Spiky Wan at that location.</li><li>All values assume the base attack Rate (no <em>"Hurry Up!"</em> bonuses).</li><li>The PS2 "chain bonus" (which only applies to single blocks) is not taken into account.</li><li>If you find any discrepancies between these figures and the actual videogames, please <a href="https://github.com/webbedspace/Pochi-Nyaa-Calculator/issues">report them on GitHub</a>.</li><br><i>Pochi & Nyaa</i> is copyright D4 Enterprise.</footer>
+<img hidden src="./nyan_r.gif"><img hidden src="./wan_y.gif"><img hidden src="./nyan_g.gif"><img hidden src="./wan_b.gif"><img hidden src="./wan_r.gif"><img hidden src="./nyan_y.gif"><img hidden src="./wan_g.gif"><img hidden src="./nyan_b.gif">
